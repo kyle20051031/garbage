@@ -228,27 +228,66 @@ function generateDemoPrediction() {
 // 啟動攝像頭
 async function startCamera() {
     console.log('啟動攝像頭 - 使用演示模式進行預測');
-    
+
+    // 檢查是否在HTTPS環境下
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        alert('⚠️ 攝像頭功能需要在HTTPS環境下使用。\n\n請確保：\n1. 網站使用HTTPS協議\n2. 允許瀏覽器訪問攝像頭\n3. 在HTTPS頁面中點擊允許權限');
+        return;
+    }
+
     try {
+        console.log('請求攝像頭權限...');
         const videoWrapper = document.querySelector('.video-wrapper');
+
+        // 顯示加載狀態
+        videoWrapper.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>正在啟動攝像頭...</p></div>';
+
         webcam = new tmImage.Webcam(500, 500, true);
         await webcam.setup();
         await webcam.play();
         streaming = true;
-        
+
+        console.log('攝像頭啟動成功');
+
         // 清空 video-wrapper 並添加 webcam canvas
         videoWrapper.innerHTML = '';
         videoWrapper.appendChild(webcam.canvas);
-        
+
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('stopBtn').style.display = 'block';
         document.getElementById('cameraResult').style.display = 'block';
-        
+
         // 開始預測循環
         loop();
     } catch (error) {
         console.error('攝像頭啟動失敗:', error);
-        alert('無法啟動攝像頭，請檢查權限');
+
+        // 更詳細的錯誤信息
+        let errorMessage = '無法啟動攝像頭，請檢查權限設定。\n\n';
+
+        if (error.name === 'NotAllowedError') {
+            errorMessage += '❌ 權限被拒絕：請在瀏覽器中允許攝像頭權限';
+        } else if (error.name === 'NotFoundError') {
+            errorMessage += '❌ 未找到攝像頭：請確認設備有攝像頭';
+        } else if (error.name === 'NotReadableError') {
+            errorMessage += '❌ 攝像頭被其他應用占用';
+        } else if (error.name === 'OverconstrainedError') {
+            errorMessage += '❌ 攝像頭不支援請求的配置';
+        } else if (error.name === 'SecurityError') {
+            errorMessage += '❌ 安全錯誤：需要在HTTPS環境下使用';
+        } else {
+            errorMessage += `❌ 未知錯誤：${error.message}`;
+        }
+
+        alert(errorMessage);
+
+        // 重置UI
+        const videoWrapper = document.querySelector('.video-wrapper');
+        videoWrapper.innerHTML = '<video id="videoElement" autoplay playsinline></video><canvas id="captureCanvas" style="display: none;"></canvas>';
+
+        document.getElementById('startBtn').style.display = 'block';
+        document.getElementById('stopBtn').style.display = 'none';
+        document.getElementById('cameraResult').style.display = 'none';
     }
 }
 
