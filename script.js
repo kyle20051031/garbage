@@ -13,7 +13,7 @@ const labelNames = {
 let animationFrameId = null;
 
 // cache-busting 參數，避免瀏覽器讀取舊壞掉的模型緩存
-const MODEL_CACHE_BUST = 'cb=v2';
+const MODEL_CACHE_BUST = 'cb=v5';
 
 // 初始化
 async function init() {
@@ -29,27 +29,15 @@ async function init() {
         
         // 方法 1: 使用本地模型檔案（如果存在）
         try {
-            const modelCheck = await fetch(`model.json?${MODEL_CACHE_BUST}`);
-            const metadataCheck = await fetch(`metadata.json?${MODEL_CACHE_BUST}`);
+            console.log('嘗試加載本地模型文件...');
             
-            if (modelCheck.ok && metadataCheck.ok) {
-                console.log('✅ 檢測到本地模型文件，使用本地模型...');
-                
-                const modelURL = `model.json?${MODEL_CACHE_BUST}`;
-                const metadataURL = `metadata.json?${MODEL_CACHE_BUST}`;
-                
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
-                console.log('✅ 本地模型加載成功，類別數量:', maxPredictions);
-            }
+            // 簡單的模型加載
+            model = await tmImage.load(`model.json?${MODEL_CACHE_BUST}`, `metadata.json?${MODEL_CACHE_BUST}`);
+            maxPredictions = model.getTotalClasses();
+            console.log('✅ 本地模型加載成功，類別數量:', maxPredictions);
+            
         } catch (e) {
-            console.log('本地模型不可用，使用演示模式...');
-            demoMode = true;
-        }
-        
-        // 如果本地模型失敗，使用演示模式
-        if (!model) {
-            console.log('⚠️ 使用演示模式 - 隨機預測結果');
+            console.log('本地模型加載失敗，使用演示模式:', e.message);
             demoMode = true;
             maxPredictions = 3;
         }
@@ -66,6 +54,7 @@ async function init() {
             <div style="text-align: center; color: orange;">
                 <p style="font-size: 1.2em; margin: 20px 0;">ℹ️ 使用演示模式</p>
                 <p>模型無法加載，但應用可以正常使用（預測為隨機）</p>
+                <p style="font-size: 0.9em; color: #666; margin: 10px 0;">錯誤詳情: ${error.message}</p>
                 <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">
                     🔄 重新加載
                 </button>
@@ -73,7 +62,7 @@ async function init() {
         `;
         setTimeout(() => {
             loadingPanel.classList.add('hidden');
-        }, 3000);
+        }, 5000);
     }
 }
 
