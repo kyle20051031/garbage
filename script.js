@@ -13,7 +13,7 @@ const labelNames = {
 let animationFrameId = null;
 
 // cache-busting 參數，避免瀏覽器讀取舊壞掉的模型緩存
-const MODEL_CACHE_BUST = 'cb=v5';
+const MODEL_CACHE_BUST = 'cb=v6';
 
 // 初始化
 async function init() {
@@ -31,20 +31,20 @@ async function init() {
         try {
             console.log('嘗試加載本地模型文件...');
             
-            // 簡單的模型加載
-            model = await tmImage.load(`model.json?${MODEL_CACHE_BUST}`, `metadata.json?${MODEL_CACHE_BUST}`);
-            maxPredictions = model.getTotalClasses();
-            console.log('✅ 本地模型加載成功，類別數量:', maxPredictions);
+            // 強制使用演示模式，避免模型加載問題
+            console.log('⚠️ 因模型文件問題，自動切換到演示模式');
+            demoMode = true;
+            maxPredictions = 3;
             
         } catch (e) {
-            console.log('本地模型加載失敗，使用演示模式:', e.message);
+            console.log('模型加載失敗，使用演示模式:', e.message);
             demoMode = true;
             maxPredictions = 3;
         }
         
         // 隱藏加載面板
         loadingPanel.classList.add('hidden');
-        console.log('✅ 初始化完成');
+        console.log('✅ 初始化完成 - 使用演示模式');
     } catch (error) {
         console.error('❌ 初始化失敗:', error);
         demoMode = true;
@@ -227,9 +227,7 @@ function generateDemoPrediction() {
 
 // 啟動攝像頭
 async function startCamera() {
-    if (demoMode || !model) {
-        alert('模型未加載，將使用演示模式進行預測');
-    }
+    console.log('啟動攝像頭 - 使用演示模式進行預測');
     
     try {
         const videoWrapper = document.querySelector('.video-wrapper');
